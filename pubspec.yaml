@@ -1,0 +1,46 @@
+name: isen_planning
+description: Application de planning de cours pour les étudiants ISEN Ouest.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.8
+  package_info_plus: ^8.1.1
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+  rename: ^3.0.2
+
+flutter:
+  uses-material-design: true
+
+# Génère l'icône pour Android/iOS/macOS/Windows à partir d'une seule image.
+# 1. Placez un PNG carré (1024x1024 recommandé, fond opaque de préférence)
+#    à l'emplacement ci-dessous.
+# 2. `flutter pub get`
+# 3. `dart run flutter_launcher_icons`
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  macos:
+    generate: true
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 256

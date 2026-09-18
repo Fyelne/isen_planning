@@ -1,0 +1,92 @@
+name: Release
+
+# Se déclenche uniquement quand un tag "v1.2.3" est poussé, par exemple :
+#   git tag v1.2.3
+#   git push origin v1.2.3
+#
+# L'app compare ses propres versions (voir lib/services/update_checker_service.dart)
+# au tag_name de la dernière GitHub Release, donc TAG et pubspec `version:`
+# doivent rester cohérents (le préfixe "v" est ignoré à la comparaison).
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write # nécessaire pour créer la Release et y attacher des fichiers
+
+jobs:
+  build-android:
+    name: Android (.apk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  build-windows:
+    name: Windows (.zip)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Compresser le build
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath isen_planning-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: isen_planning-windows.zip
+
+  build-linux:
+    name: Linux (.tar.gz)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Dépendances système (GTK, etc.)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Compresser le build
+        run: tar -czf isen_planning-linux.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-tar
+          path: isen_planning-linux.tar.gz
+
+  # macOS et iOS nécessitent une signature Apple Developer (certificats,
+  # provisioning profiles) pour produire un binaire distribuable ; ce n'est
+  # pas configuré ici. Voir la documentation Flutter sur le "code signing"
+  # pour ajouter un job équivalent (runs-on: macos-latest).
+
+  publish-release:
+    name: Publier la GitHub Release
+    needs: [build-android, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Créer la release et y attacher les fichiers
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/android-apk/app-release.apk
+            artifacts/windows-zip/isen_planning-windows.zip
+            artifacts/linux-tar/isen_planning-linux.tar.gz
